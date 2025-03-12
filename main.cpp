@@ -43,6 +43,7 @@ private:
     const char* soundOnImagePath = "sound_on.png";
     const char* soundOffImagePath = "sound_off.png";
     const char* pauseButtonImagePath = "pause.png";
+    const char* continueImagePath = "continue.png";
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* backgroundTexture;
@@ -52,6 +53,7 @@ private:
     SDL_Texture* soundOnTexture;
     SDL_Texture* soundOffTexture;
     SDL_Texture* pauseButtonTexture;
+    SDL_Texture* continueTexture;
     Mix_Music* backgroundMusic;
     Mix_Chunk* moveSound;
     Mix_Chunk* clearSound;
@@ -63,7 +65,7 @@ private:
     bool gameOver;
     bool inMenu;
     bool isSoundOn; // Trạng thái âm thanh (bật/tắt)
-    bool isPaused;  // Trạng thái tạm dừng
+    bool isContinue;  // Trạng thái tạm dừng
 
     SDL_Rect startButton = {SCREEN_WIDTH / 2 - 100, 310, 200, 50};
     SDL_Rect instructionsButton = {SCREEN_WIDTH / 2 - 100, 380, 200, 50};
@@ -155,7 +157,7 @@ private:
 public:
     Tetris() :  window(nullptr), renderer(nullptr), backgroundTexture(nullptr), backgroundMusic(nullptr),
                    moveSound(nullptr), clearSound(nullptr), speed(500), gameOver(false), inMenu(true),
-                   font(nullptr), isSoundOn(true), isPaused(false) {
+                   font(nullptr), isSoundOn(true), isContinue(true) {
         grid = vector<vector<int>>(ROWS, vector<int>(COLS, 0));
 
         // Khởi tạo SDL
@@ -209,10 +211,11 @@ public:
         soundOnTexture = loadTexture(soundOnImagePath, renderer);
         soundOffTexture = loadTexture(soundOffImagePath, renderer);
         pauseButtonTexture = loadTexture(pauseButtonImagePath, renderer);
+        continueTexture = loadTexture(continueImagePath, renderer);
 
         // Kiểm tra xem các texture có được tải thành công không
         if (!startButtonTexture || !instructionsButtonTexture || !exitButtonTexture ||
-            !soundOnTexture || !soundOffTexture || !pauseButtonTexture) {
+            !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture) {
             printf("Failed to load button textures!\n");
         }
 
@@ -250,6 +253,7 @@ public:
         SDL_DestroyTexture(soundOnTexture);
         SDL_DestroyTexture(soundOffTexture);
         SDL_DestroyTexture(pauseButtonTexture);
+        SDL_DestroyTexture(continueTexture);
         Mix_FreeMusic(backgroundMusic);
         Mix_FreeChunk(moveSound);
         Mix_FreeChunk(clearSound);
@@ -420,8 +424,9 @@ public:
             drawBlock(block.x, block.y, COLORS[shapeIndex]);
         }
         if (!inMenu) {
-            SDL_RenderCopy(renderer, pauseButtonTexture, nullptr, &pauseButton);
+            SDL_RenderCopy(renderer, isContinue ? continueTexture : pauseButtonTexture, nullptr, &pauseButton);
         }
+        SDL_RenderCopy(renderer, isSoundOn ? soundOnTexture : soundOffTexture, nullptr, &soundButton);
 
         SDL_RenderPresent(renderer); // Cập nhật màn hình
     }
@@ -471,23 +476,36 @@ public:
                 case SDLK_RIGHT: movePiece(1); break;
                 case SDLK_DOWN: dropPiece(); break;
                 case SDLK_UP: rotatePiece(); break;
-                case SDLK_p:
-                    isPaused = !isPaused;
-                    if (isPaused) Mix_PauseMusic();
-                    else Mix_ResumeMusic();
-                    break;
             }
         } else if (event.type == SDL_MOUSEBUTTONDOWN) {
             int mouseX = event.button.x;
             int mouseY = event.button.y;
 
             if (checkButtonClick(mouseX, mouseY, pauseButton)) {
-                isPaused = !isPaused;
-                if (isPaused) Mix_PauseMusic();
-                else Mix_ResumeMusic();
+                isContinue = !isContinue; // Đảo trạng thái continue/pause
+
+                // Kiểm tra cả hai điều kiện: isSoundOn và isContinue
+                if (isSoundOn && isContinue) {
+                    Mix_ResumeMusic(); // Bật nhạc nếu cả hai điều kiện đều đúng
+                } else {
+                    Mix_PauseMusic(); // Tắt nhạc nếu một trong hai điều kiện sai
+                }
+
+                    render(); // Render lại màn hình để cập nhật nút pause/continue
+            }
+
+            if (checkButtonClick(mouseX, mouseY, soundButton)) {
+                isSoundOn = !isSoundOn;
+                if (isSoundOn) {
+                    Mix_ResumeMusic(); // Bật nhạc
+                } else {
+                    Mix_PauseMusic(); // Tắt nhạc
+                }
+                render(); // Render lại màn hình để cập nhật nút bật/tắt tiếng
             }
         }
     }
+
     void dropPiece() {
     while (!collides()) {
         for (auto& block : currentPiece) block.y++;
@@ -532,7 +550,7 @@ public:
 
             if (inMenu) {
                 renderMenu(); // Vẽ menu nếu đang ở trong menu
-            } else if (!isPaused) {
+            } else if (isContinue) {
                 Uint32 currentTick = SDL_GetTicks();
                 if (currentTick - lastTick > speed) {
                     lastTick = currentTick;
