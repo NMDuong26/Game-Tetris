@@ -49,6 +49,7 @@ private:
     SDL_Texture* backgroundTexture;
     SDL_Texture* startButtonTexture;
     SDL_Texture* instructionsButtonTexture;
+    SDL_Texture* instructionsTexture;
     SDL_Texture* exitButtonTexture;
     SDL_Texture* soundOnTexture;
     SDL_Texture* soundOffTexture;
@@ -124,16 +125,19 @@ private:
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Hiển thị hướng dẫn
-        SDL_Color textColor = {255, 255, 255, 255};
-        renderText("Instructions:", SCREEN_WIDTH / 2 - 100, 100, textColor);
-        renderText("Use arrow keys to move pieces", SCREEN_WIDTH / 2 - 150, 150, textColor);
-        renderText("Press 'P' to pause", SCREEN_WIDTH / 2 - 100, 200, textColor);
+       // Hiển thị hình ảnh hướng dẫn
+        if (instructionsTexture) {
+            SDL_Rect instructionsRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; // Hiển thị toàn màn hình
+            SDL_RenderCopy(renderer, instructionsTexture, nullptr, &instructionsRect);
+        } else {
+            // Nếu không tải được hình ảnh, hiển thị thông báo lỗi
+            SDL_Color textColor = {255, 255, 255, 255};
+            renderText("Failed to load instructions image!", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2, textColor);
+        }
 
-        // Hiển thị nút quay lại
-        SDL_Rect backButton = {SCREEN_WIDTH / 2 - 50, 250, 100, 50};
-        SDL_RenderCopy(renderer, startButtonTexture, nullptr, &backButton);
-        renderText("", SCREEN_WIDTH / 2 - 30, 260, textColor);
+        // Hiển thị nút quay lại (Exit) ở góc phải màn hình
+        SDL_Rect backButton = {SCREEN_WIDTH - 110, SCREEN_HEIGHT - 60, 100, 50}; // Vị trí góc phải dưới
+        SDL_RenderCopy(renderer, exitButtonTexture, nullptr, &backButton);
 
         SDL_RenderPresent(renderer);
 
@@ -218,6 +222,11 @@ public:
             !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture) {
             printf("Failed to load button textures!\n");
         }
+        //tải ảnh cho phần hướng dẫn
+        instructionsTexture = loadTexture("instructions_background.png", renderer);
+        if (!instructionsTexture) {
+            printf("Failed to load instructions image!\n");
+        }
 
         // Tải hình nền và âm thanh
         loadMenuBackground("menu_background.png");
@@ -247,6 +256,7 @@ public:
         SDL_DestroyTexture(backgroundTexture);
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
+        SDL_DestroyTexture(instructionsTexture);
         SDL_DestroyTexture(startButtonTexture);
         SDL_DestroyTexture(instructionsButtonTexture);
         SDL_DestroyTexture(exitButtonTexture);
@@ -496,7 +506,7 @@ public:
 
             if (checkButtonClick(mouseX, mouseY, soundButton)) {
                 isSoundOn = !isSoundOn;
-                if (isSoundOn) {
+                if (isSoundOn && isContinue) {
                     Mix_ResumeMusic(); // Bật nhạc
                 } else {
                     Mix_PauseMusic(); // Tắt nhạc
