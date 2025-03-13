@@ -63,6 +63,8 @@ private:
     vector<vector<int>> grid;
     vector<Block> currentPiece;
     int speed, shapeIndex;
+    int currentScore = 0; // Điểm hiện tại
+    int highScore = 0;    // Điểm cao nhất
     bool gameOver;
     bool inMenu;
     bool isSoundOn; // Trạng thái âm thanh (bật/tắt)
@@ -233,6 +235,7 @@ public:
         loadBackground("image.png");
         loadSounds();
         spawnPiece();
+        loadHighScore();// Đọc điểm cao nhất khi khởi động game
     }
     SDL_Texture* loadTexture(const char* path, SDL_Renderer* renderer) {
         SDL_Surface* loadedSurface = IMG_Load(path);
@@ -270,6 +273,7 @@ public:
         Mix_CloseAudio();
         IMG_Quit();
         SDL_Quit();
+        saveHighScore(); // Lưu điểm cao nhất khi thoát game
     }
 
     void loadMenuBackground(const char* filePath) {
@@ -370,16 +374,41 @@ public:
 
     void mergePiece() { for (auto& block : currentPiece) grid[block.y][block.x] = shapeIndex + 1; }
 
-    void clearLines() {
+    void loadHighScore() {
+        FILE* file = fopen("highscore.txt", "r");
+        if (file) {
+            fscanf(file, "%d", &highScore); // Đọc điểm cao nhất từ file
+            fclose(file);
+        } else {
+            highScore = 0; // Nếu file không tồn tại, đặt điểm cao nhất là 0
+        }
+    }
+
+    void saveHighScore() {
+        FILE* file = fopen("highscore.txt", "w");
+        if (file) {
+            fprintf(file, "%d", highScore); // Lưu điểm cao nhất vào file
+            fclose(file);
+        }
+    }
+
+
+    void clearLines() { // Hàm sử lí hàng đầy
         for (int y = ROWS - 1; y >= 0; y--) {
-            bool full = true;
+            bool full = true; // Gỉa sử hàng đầy
+            // Kiểm tra xem hàng có đấy hay không
             for (int x : grid[y]) if (!x) { full = false; break; }
+            // Nếu hàm đầy thì xóa hàng và di chuyển các hàm ở trên xuống
             if (full) {
-                for (int yy = y; yy > 0; yy--) grid[yy] = grid[yy - 1];
-                grid[0] = vector<int>(COLS, 0);
-                speed = max(100, speed - 20);
-                Mix_PlayChannel(-1, clearSound, 0);
-                y++;
+                for (int yy = y; yy > 0; yy--) grid[yy] = grid[yy - 1]; // Di chuyển hàng phía trên xuống
+                grid[0] = vector<int>(COLS, 0); // Đặt hàng trên cùng thành trống
+                speed = max(100, speed - 20);   // Tăng tốc độ rơi (tùy chọn)
+                if(isSoundOn) Mix_PlayChannel(-1, clearSound, 0);  // Phát âm thanh khi xóa hàng
+
+                // Tăng điểm hiện tại
+                currentScore += 100; //  Thưởng 100 điểm cho mỗi hàng xóa
+
+                y++; // Kiểm tra lại hàng hiện tại vì các hàng đã di chuyển xuống
             }
         }
     }
@@ -415,6 +444,13 @@ public:
             clearLines(); // Xóa các dòng đã hoàn thành
             spawnPiece(); // Tạo khối mới
         }
+
+         // Cập nhật điểm cao nhất
+        if (currentScore >= highScore) {
+            highScore = currentScore;
+            saveHighScore(); // Lưu điểm cao nhất vào file
+        }
+
     }
 
     void render() {
@@ -437,6 +473,15 @@ public:
             SDL_RenderCopy(renderer, isContinue ? continueTexture : pauseButtonTexture, nullptr, &pauseButton);
         }
         SDL_RenderCopy(renderer, isSoundOn ? soundOnTexture : soundOffTexture, nullptr, &soundButton);
+
+        // Hiển thị điểm hiện tại và điểm cao nhất
+        SDL_Color textColor = {255, 255, 255, 255}; // Màu trắng
+        char scoreText[40];
+        sprintf(scoreText, "Score: %d", currentScore); // Điểm hiện tại
+        renderText(scoreText, 10, 50, textColor);
+
+        sprintf(scoreText, "High Score: %d", highScore); // Điểm cao nhất
+        renderText(scoreText, 10, 80, textColor);
 
         SDL_RenderPresent(renderer); // Cập nhật màn hình
     }
@@ -467,6 +512,7 @@ public:
 
             if (checkButtonClick(mouseX, mouseY, startButton)) {
                 inMenu = false; // Bắt đầu game
+                currentScore = 0; // Reset điểm hiện tại
             } else if (checkButtonClick(mouseX, mouseY, instructionsButton)) {
                 renderInstructions(); // Hiển thị hướng dẫn
             } else if (checkButtonClick(mouseX, mouseY, exitButton)) {
@@ -520,12 +566,14 @@ public:
     while (!collides()) {
         for (auto& block : currentPiece) block.y++;
     }
-    for (auto& block : currentPiece) block.y--;
     mergePiece();
     clearLines();
     spawnPiece();
-}
 
+    if (isSoundOn) Mix_PlayChannel(-1, moveSound, 0); // Phát âm thanh khi khối rơi
+
+    currentScore += 10; // Điểm thưởng
+}
     void rotatePiece() {
         int pivotX = currentPiece[1].x, pivotY = currentPiece[1].y;
         vector<Block> rotated;
