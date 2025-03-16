@@ -9,9 +9,11 @@
 
 using namespace std;
 
+// Kích thước màn hình và khối
 const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 600, BLOCK_SIZE = 50;
 const int ROWS = SCREEN_HEIGHT / BLOCK_SIZE, COLS = SCREEN_WIDTH / BLOCK_SIZE;
 
+// Các hình dạng của khối Tetris (I, O, T, L, J, S, Z)
 const int SHAPES[7][4][2] = {
     {{0, 1}, {1, 1}, {2, 1}, {3, 1}}, // I
     {{0, 0}, {1, 0}, {0, 1}, {1, 1}}, // O
@@ -33,10 +35,13 @@ const SDL_Color COLORS[7] = {
     {255, 0, 0, 255}      // Z - Red
 };
 
+// Cấu trúc đại diện cho một khối trong trò chơi
 struct Block { int x, y; };
 
+// Lớp chính của trò chơi Tetris
 class Tetris {
 private:
+    // Đường dẫn đến các hình ảnh nút
     const char* startButtonImagePath = "start.png";
     const char* instructionsButtonImagePath = "instructions.png";
     const char* exitButtonImagePath = "exit.png";
@@ -44,6 +49,8 @@ private:
     const char* soundOffImagePath = "sound_off.png";
     const char* pauseButtonImagePath = "pause.png";
     const char* continueImagePath = "continue.png";
+
+    // Con trỏ SDL để quản lý cửa sổ, renderer, texture, âm thanh, font chữ
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* backgroundTexture;
@@ -60,6 +67,8 @@ private:
     Mix_Chunk* clearSound;
     TTF_Font* font;
     SDL_Texture* menuBackgroundTexture;
+
+    // Lưới trò chơi và khối hiện tại
     vector<vector<int>> grid;
     vector<Block> currentPiece;
     int speed, shapeIndex;
@@ -70,12 +79,14 @@ private:
     bool isSoundOn; // Trạng thái âm thanh (bật/tắt)
     bool isContinue;  // Trạng thái tạm dừng
 
-    SDL_Rect startButton = {SCREEN_WIDTH / 2 - 100, 310, 200, 50};
-    SDL_Rect instructionsButton = {SCREEN_WIDTH / 2 - 100, 380, 200, 50};
-    SDL_Rect exitButton = {SCREEN_WIDTH / 2 - 100, 450, 200, 50};
-    SDL_Rect soundButton = {SCREEN_WIDTH - 1000, 20, 80, 30};
+    // Vị trí và kích thước các nút
+    SDL_Rect startButton = {SCREEN_WIDTH / 2 - 100, 270, 200, 80};
+    SDL_Rect instructionsButton = {SCREEN_WIDTH / 2 - 100, 360, 200, 80};
+    SDL_Rect exitButton = {SCREEN_WIDTH / 2 - 100, 450, 200, 60};
+    SDL_Rect soundButton = {SCREEN_WIDTH - 1000, 10, 60, 30};
     SDL_Rect pauseButton = {SCREEN_WIDTH - 100, 20, 60, 60};
 
+    // Vẽ menu chính
     void renderMenu() {
         // Vẽ hình ảnh nền menu
         if (menuBackgroundTexture) {
@@ -91,10 +102,10 @@ private:
         SDL_RenderCopy(renderer, exitButtonTexture, nullptr, &exitButton);
         SDL_RenderCopy(renderer, isSoundOn ? soundOnTexture : soundOffTexture, nullptr, &soundButton);
 
-
         SDL_RenderPresent(renderer); // Cập nhật màn hình
     }
 
+    // Vẽ văn bản lên màn hình
     void renderText(const char* text, int x, int y, SDL_Color color) {
         SDL_Surface* surface = TTF_RenderText_Solid(font, text, color); // Tạo surface từ văn bản
         if (!surface) {
@@ -117,19 +128,21 @@ private:
         SDL_DestroyTexture(texture);
     }
 
+    // Kiểm tra xem chuột có nhấp vào nút không
     bool checkButtonClick(int mouseX, int mouseY, SDL_Rect button) {
         return (mouseX >= button.x && mouseX <= button.x + button.w &&
                 mouseY >= button.y && mouseY <= button.y + button.h);
     }
 
+    // Hiển thị màn hình hướng dẫn
     void renderInstructions() {
         // Xóa màn hình
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-       // Hiển thị hình ảnh hướng dẫn
+        // Hiển thị hình ảnh hướng dẫn
         if (instructionsTexture) {
-            SDL_Rect instructionsRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; // Hiển thị toàn màn hình
+            SDL_Rect instructionsRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT-38}; // Hiển thị toàn màn hình
             SDL_RenderCopy(renderer, instructionsTexture, nullptr, &instructionsRect);
         } else {
             // Nếu không tải được hình ảnh, hiển thị thông báo lỗi
@@ -161,6 +174,7 @@ private:
     }
 
 public:
+    // Constructor: Khởi tạo các thành phần của trò chơi
     Tetris() :  window(nullptr), renderer(nullptr), backgroundTexture(nullptr), backgroundMusic(nullptr),
                    moveSound(nullptr), clearSound(nullptr), speed(500), gameOver(false), inMenu(true),
                    font(nullptr), isSoundOn(true), isContinue(true) {
@@ -224,7 +238,7 @@ public:
             !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture) {
             printf("Failed to load button textures!\n");
         }
-        //tải ảnh cho phần hướng dẫn
+        // Tải ảnh cho phần hướng dẫn
         instructionsTexture = loadTexture("instructions_background.png", renderer);
         if (!instructionsTexture) {
             printf("Failed to load instructions image!\n");
@@ -235,8 +249,10 @@ public:
         loadBackground("image.png");
         loadSounds();
         spawnPiece();
-        loadHighScore();// Đọc điểm cao nhất khi khởi động game
+        loadHighScore(); // Đọc điểm cao nhất khi khởi động game
     }
+
+    // Hàm tải texture từ file
     SDL_Texture* loadTexture(const char* path, SDL_Renderer* renderer) {
         SDL_Surface* loadedSurface = IMG_Load(path);
         if (!loadedSurface) {
@@ -252,6 +268,7 @@ public:
         return texture;
     }
 
+    // Destructor: Giải phóng bộ nhớ và tài nguyên
     ~Tetris() {
         TTF_CloseFont(font); // Giải phóng font
         TTF_Quit(); // Đóng SDL_ttf
@@ -276,6 +293,7 @@ public:
         saveHighScore(); // Lưu điểm cao nhất khi thoát game
     }
 
+    // Tải hình nền menu
     void loadMenuBackground(const char* filePath) {
         SDL_Surface* loadedSurface = IMG_Load(filePath); // Tải hình ảnh từ file
         if (!loadedSurface) {
@@ -289,6 +307,7 @@ public:
         SDL_FreeSurface(loadedSurface); // Giải phóng surface
     }
 
+    // Tải hình nền game
     void loadBackground(const char* filePath) {
         SDL_Surface* loadedSurface = IMG_Load(filePath);
         if (!loadedSurface) {
@@ -299,6 +318,7 @@ public:
         SDL_FreeSurface(loadedSurface);
     }
 
+    // Tải âm thanh
     void loadSounds() {
         backgroundMusic = Mix_LoadMUS("background_music.mp3");
         moveSound = Mix_LoadWAV("move_sound.wav");
@@ -308,6 +328,7 @@ public:
         }
     }
 
+    // Tạo khối mới
     void spawnPiece() {
         shapeIndex = rand() % 7;
         currentPiece.clear();
@@ -316,6 +337,7 @@ public:
         if (collides()) gameOver = true; // Nếu va chạm, đặt gameOver = true
     }
 
+    // Vẽ màn hình game over
     void renderGameOver() {
         // Tải hình ảnh game over
         SDL_Surface* gameOverSurface = IMG_Load("game_over.png");
@@ -363,6 +385,7 @@ public:
         return;
     }
 
+    // Kiểm tra va chạm
     bool collides(int dx = 0, int dy = 1, vector<Block> testPiece = {}) {
         if (testPiece.empty()) testPiece = currentPiece;
         for (auto& block : testPiece) {
@@ -372,8 +395,10 @@ public:
         return false;
     }
 
+    // Hợp nhất khối vào lưới
     void mergePiece() { for (auto& block : currentPiece) grid[block.y][block.x] = shapeIndex + 1; }
 
+    // Đọc điểm cao nhất từ file
     void loadHighScore() {
         FILE* file = fopen("highscore.txt", "r");
         if (file) {
@@ -384,6 +409,7 @@ public:
         }
     }
 
+    // Lưu điểm cao nhất vào file
     void saveHighScore() {
         FILE* file = fopen("highscore.txt", "w");
         if (file) {
@@ -392,13 +418,13 @@ public:
         }
     }
 
-
-    void clearLines() { // Hàm sử lí hàng đầy
+    // Xóa các hàng đã đầy
+    void clearLines() {
         for (int y = ROWS - 1; y >= 0; y--) {
-            bool full = true; // Gỉa sử hàng đầy
-            // Kiểm tra xem hàng có đấy hay không
+            bool full = true; // Giả sử hàng đầy
+            // Kiểm tra xem hàng có đầy hay không
             for (int x : grid[y]) if (!x) { full = false; break; }
-            // Nếu hàm đầy thì xóa hàng và di chuyển các hàm ở trên xuống
+            // Nếu hàng đầy thì xóa hàng và di chuyển các hàng ở trên xuống
             if (full) {
                 for (int yy = y; yy > 0; yy--) grid[yy] = grid[yy - 1]; // Di chuyển hàng phía trên xuống
                 grid[0] = vector<int>(COLS, 0); // Đặt hàng trên cùng thành trống
@@ -406,36 +432,40 @@ public:
                 if(isSoundOn) Mix_PlayChannel(-1, clearSound, 0);  // Phát âm thanh khi xóa hàng
 
                 // Tăng điểm hiện tại
-                currentScore += 100; //  Thưởng 100 điểm cho mỗi hàng xóa
+                currentScore += 100; // Thưởng 100 điểm cho mỗi hàng xóa
 
                 y++; // Kiểm tra lại hàng hiện tại vì các hàng đã di chuyển xuống
             }
         }
     }
+
+    // Di chuyển khối
     void movePiece(int dx) {
-    // Tạo một bản sao của khối hiện tại để kiểm tra va chạm
-    vector<Block> testPiece = currentPiece;
-    for (auto& block : testPiece) {
-        block.x += dx; // Di chuyển khối theo hướng dx (trái hoặc phải)
-    }
+        // Tạo một bản sao của khối hiện tại để kiểm tra va chạm
+        vector<Block> testPiece = currentPiece;
+        for (auto& block : testPiece) {
+            block.x += dx; // Di chuyển khối theo hướng dx (trái hoặc phải)
+        }
 
-    // Kiểm tra xem khối có va chạm với tường hoặc các khối khác không
-    bool canMove = true;
-    for (auto& block : testPiece) {
-        if (block.x < 0 || block.x >= COLS || (block.y >= 0 && grid[block.y][block.x])) {
-            canMove = false; // Nếu có va chạm, không di chuyển
-            break;
+        // Kiểm tra xem khối có va chạm với tường hoặc các khối khác không
+        bool canMove = true;
+        for (auto& block : testPiece) {
+            if (block.x < 0 || block.x >= COLS || (block.y >= 0 && grid[block.y][block.x])) {
+                canMove = false; // Nếu có va chạm, không di chuyển
+                break;
+            }
+        }
+
+        // Nếu không có va chạm, di chuyển khối hiện tại
+        if (canMove) {
+            for (auto& block : currentPiece) {
+                block.x += dx;
+            }
+            if (isSoundOn) Mix_PlayChannel(-1, moveSound, 0); // Phát âm thanh nếu âm thanh được bật
         }
     }
 
-    // Nếu không có va chạm, di chuyển khối hiện tại
-    if (canMove) {
-        for (auto& block : currentPiece) {
-            block.x += dx;
-        }
-        if (isSoundOn) Mix_PlayChannel(-1, moveSound, 0); // Phát âm thanh nếu âm thanh được bật
-    }
-}
+    // Cập nhật trạng thái game
     void update() {
         if (!collides()) {
             for (auto& block : currentPiece) block.y++; // Di chuyển khối xuống
@@ -445,14 +475,14 @@ public:
             spawnPiece(); // Tạo khối mới
         }
 
-         // Cập nhật điểm cao nhất
+        // Cập nhật điểm cao nhất
         if (currentScore >= highScore) {
             highScore = currentScore;
             saveHighScore(); // Lưu điểm cao nhất vào file
         }
-
     }
 
+    // Vẽ trò chơi
     void render() {
         renderBackground(); // Vẽ nền
 
@@ -486,6 +516,7 @@ public:
         SDL_RenderPresent(renderer); // Cập nhật màn hình
     }
 
+    // Vẽ nền
     void renderBackground() {
         if (backgroundTexture) {
             SDL_RenderCopy(renderer, backgroundTexture, nullptr, nullptr); // Vẽ texture nền
@@ -495,6 +526,7 @@ public:
         }
     }
 
+    // Vẽ một khối
     void drawBlock(int x, int y, SDL_Color color) {
         SDL_Rect rect = {x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE};
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
@@ -505,6 +537,7 @@ public:
         SDL_RenderDrawRect(renderer, &rect);
     }
 
+    // Xử lý sự kiện trong menu
     void handleMenuEvents(SDL_Event& event) {
         if (event.type == SDL_MOUSEBUTTONDOWN) {
             int mouseX = event.button.x;
@@ -525,6 +558,7 @@ public:
         }
     }
 
+    // Xử lý sự kiện trong game
     void handleGameEvents(SDL_Event& event) {
         if (event.type == SDL_KEYDOWN) {
             switch (event.key.keysym.sym) {
@@ -547,7 +581,7 @@ public:
                     Mix_PauseMusic(); // Tắt nhạc nếu một trong hai điều kiện sai
                 }
 
-                    render(); // Render lại màn hình để cập nhật nút pause/continue
+                render(); // Render lại màn hình để cập nhật nút pause/continue
             }
 
             if (checkButtonClick(mouseX, mouseY, soundButton)) {
@@ -562,18 +596,21 @@ public:
         }
     }
 
+    // Thả khối xuống nhanh
     void dropPiece() {
-    while (!collides()) {
-        for (auto& block : currentPiece) block.y++;
+        while (!collides()) {
+            for (auto& block : currentPiece) block.y++;
+        }
+        mergePiece();
+        clearLines();
+        spawnPiece();
+
+        if (isSoundOn) Mix_PlayChannel(-1, moveSound, 0); // Phát âm thanh khi khối rơi
+
+        currentScore += 10; // Điểm thưởng
     }
-    mergePiece();
-    clearLines();
-    spawnPiece();
 
-    if (isSoundOn) Mix_PlayChannel(-1, moveSound, 0); // Phát âm thanh khi khối rơi
-
-    currentScore += 10; // Điểm thưởng
-}
+    // Xoay khối
     void rotatePiece() {
         int pivotX = currentPiece[1].x, pivotY = currentPiece[1].y;
         vector<Block> rotated;
@@ -587,6 +624,7 @@ public:
         }
     }
 
+    // Chạy trò chơi
     void run() {
         SDL_Event event;
         Uint32 lastTick = SDL_GetTicks();
@@ -626,8 +664,9 @@ public:
     }
 };
 
+// Hàm main
 int main(int argc, char* argv[]) {
-    srand(time(0));
+    srand(time(0)); // Khởi tạo seed cho hàm rand()
     Tetris game;
     game.run();
     return 0;
