@@ -3,3 +3,66 @@
 	<iostream>
 	<SDL.h>
 
+1742695717 source:c:\users\admin\documents\ltnc\game-tetris\main.cpp
+	"Tetris.h"
+
+1742569769 c:\users\admin\documents\ltnc\game-tetris\main.h
+	"Tetris.h"
+
+1742695288 c:\users\admin\documents\ltnc\game-tetris\tetris.h
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_mixer.h>
+	<SDL_ttf.h>
+	<vector>
+	<cstdlib>
+	<ctime>
+	<iostream>
+
+1742569585 c:\users\admin\documents\ltnc\game-tetris\constants.h
+	<SDL.h>
+
+1742691980 c:\users\admin\documents\ltnc\game-tetris\menuhandler.h
+	"Constants.h"
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_mixer.h>
+	<SDL_ttf.h>
+	<vector>
+	<string>
+
+1742692363 c:\users\admin\documents\ltnc\game-tetris\gamehandler.h
+	"Constants.h"
+	"MenuHandler.h"
+	<bits/stdc++.h>
+	<algorithm>
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_mixer.h>
+	<SDL_ttf.h>
+	<vector>
+	<string>
+
+1742691085 source:c:\users\admin\documents\ltnc\game-tetris\menuhandler.cpp
+	"MenuHandler.h"
+
+1742690615 source:c:\users\admin\documents\ltnc\game-tetris\src\main.cpp
+	"main.h"
+
+1742690615 c:\users\admin\documents\ltnc\game-tetris\include\main.h
+
+1742696179 source:c:\users\admin\documents\ltnc\game-tetris\gamelogic.cpp
+	"Tetris.h"
+
+1742696179 source:c:\users\admin\documents\ltnc\game-tetris\tetris.cpp
+	"Tetris.h"
+
+1742693706 source:c:\users\admin\documents\ltnc\game-tetris\eventhandling.cpp
+	"Tetris.h"
+
+1742693744 source:c:\users\admin\documents\ltnc\game-tetris\rendering.cpp
+	"Tetris.h"
+
+1742693706 source:c:\users\admin\documents\ltnc\game-tetris\resourcemanagement.cpp
+	"Tetris.h"
+
