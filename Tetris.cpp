@@ -59,9 +59,13 @@ Tetris::Tetris() : window(nullptr), renderer(nullptr), backgroundTexture(nullptr
     pauseButtonTexture = loadTexture("pause.png", renderer);
     continueTexture = loadTexture("continue.png", renderer);
 
+    bombTexture = loadTexture("bomb.png", renderer);
+    explosionTexture = loadTexture("explosion.png", renderer);
+    explosionSound = Mix_LoadWAV("explosion.wav");
+
     // Kiểm tra xem các texture có được tải thành công không
     if (!startButtonTexture || !instructionsButtonTexture || !exitButtonTexture ||
-        !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture) {
+        !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture || !bombTexture || !explosionTexture) {
         printf("Failed to load button textures!\n");
     }
     // Tải ảnh cho phần hướng dẫn
@@ -94,9 +98,13 @@ Tetris::~Tetris() {
     SDL_DestroyTexture(soundOffTexture);
     SDL_DestroyTexture(pauseButtonTexture);
     SDL_DestroyTexture(continueTexture);
+    SDL_DestroyTexture(bombTexture);
+    SDL_DestroyTexture(explosionTexture);
+
     Mix_FreeMusic(backgroundMusic);
     Mix_FreeChunk(moveSound);
     Mix_FreeChunk(clearSound);
+    Mix_FreeChunk(explosionSound);
     Mix_CloseAudio();
     IMG_Quit();
     SDL_Quit();

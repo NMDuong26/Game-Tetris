@@ -27,8 +27,10 @@ void Tetris::handleGameEvents(SDL_Event& event) {
             case SDLK_RIGHT: movePiece(1); break;
             case SDLK_DOWN: dropPiece(); break;
             case SDLK_UP: rotatePiece(); break;
+            case SDLK_b: explodeAirBomb(); break;
         }
-    } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+    }
+    else if (event.type == SDL_MOUSEBUTTONDOWN) {
         int mouseX = event.button.x;
         int mouseY = event.button.y;
 
@@ -53,6 +55,12 @@ void Tetris::handleGameEvents(SDL_Event& event) {
                 Mix_PauseMusic(); // Tắt nhạc
             }
             render(); // Render lại màn hình để cập nhật nút bật/tắt tiếng
+        }
+    }
+
+    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_b) {
+        if (!bombs.empty()) {
+            bombs[0].explode();
         }
     }
 }

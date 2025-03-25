@@ -40,6 +40,8 @@
 		<Unit filename="ResourceManagement.cpp" />
 		<Unit filename="Tetris.cpp" />
 		<Unit filename="Tetris.h" />
+		<Unit filename="bomb.cpp" />
+		<Unit filename="bomb.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

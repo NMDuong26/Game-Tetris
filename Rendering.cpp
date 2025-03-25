@@ -137,6 +137,8 @@ void Tetris::render() {
         }
     }
 
+    renderBombs();
+
     // Vẽ khối hiện tại
     for (auto& block : currentPiece) {
         drawBlock(block.x, block.y, COLORS[shapeIndex]);

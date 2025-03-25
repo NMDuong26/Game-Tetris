@@ -90,7 +90,97 @@ void Tetris::rotatePiece() {
     }
 }
 
+void Tetris::explodeAirBomb() {
+    for (auto& bomb : bombs) {
+        if (bomb.isActive()) { // Nếu bom vẫn hoạt động trên không
+            explodeBomb(bomb.getX(), bomb.getY()); // Phát nổ
+            bomb.explode();
+        }
+    }
+
+    // Xóa bom đã nổ khỏi danh sách
+    bombs.erase(
+        std::remove_if(bombs.begin(), bombs.end(),
+            [](const Bomb& b) { return !b.isActive(); }),
+        bombs.end()
+    );
+}
+
+void Tetris::spawnRandomBomb() {
+    if (rand() % 100 == 0) {  // Tỉ lệ 1/500 mỗi frame
+        bombs.emplace_back(rand() % COLS, 0, bombTexture);
+    }
+}
+
+void Tetris::updateBombs() {
+    for (auto& bomb : bombs) {
+        if (bomb.isActive()) {
+            bomb.update();
+        }
+            // Kiểm tra va chạm với khối hoặc đáy
+            if (bomb.getY() >= ROWS) {
+                    bomb.deactivate(); // Làm cho bom biến mất khi rơi hết màn hình
+            } else if (bomb.getY() >= 0 && grid[bomb.getY()][bomb.getX()] != 0) {
+                        explodeBomb(bomb.getX(), bomb.getY()); // Chỉ nổ nếu va chạm với khối
+                            bomb.explode();
+            }
+    }
+
+    bombs.erase(
+    std::remove_if(bombs.begin(), bombs.end(),
+        [](const Bomb& b) { return !b.isActive(); }),
+    bombs.end()
+    );
+
+}
+
+void Tetris::renderBombs() {
+    for (const auto& bomb : bombs) {
+        if (bomb.isActive()) {  // Chỉ vẽ bom đang active
+            SDL_Rect bombRect = {
+                bomb.getX() * BLOCK_SIZE,
+                bomb.getY() * BLOCK_SIZE,
+                BLOCK_SIZE,
+                BLOCK_SIZE
+            };
+            SDL_RenderCopy(renderer, bombTexture, nullptr, &bombRect);
+        }
+    }
+}
+
+void Tetris::explodeBomb(int x, int y) {
+
+    // Hiệu ứng nổ
+    SDL_Rect explosionRect = {
+        x * BLOCK_SIZE - BLOCK_SIZE,  // Center the explosion
+        y * BLOCK_SIZE - BLOCK_SIZE,
+        BLOCK_SIZE * 3,
+        BLOCK_SIZE * 3
+    };
+
+    SDL_RenderCopy(renderer, explosionTexture, nullptr, &explosionRect);
+    SDL_RenderPresent(renderer);
+
+    SDL_Delay(200);  // 0.1 giây
+
+    // Phá hủy khối (9 ô vuông 3x3)
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+                grid[ny][nx] = 0;  // Xóa khối
+            }
+        }
+    }
+
+    if (isSoundOn) Mix_PlayChannel(-1, explosionSound, 0);
+}
+
 void Tetris::update() {
+    spawnRandomBomb();  // Tạo bom ngẫu nhiên
+    updateBombs();      // Cập nhật bom
+
     if (!collides()) {
         for (auto& block : currentPiece) block.y++; // Di chuyển khối xuống
     } else {
@@ -108,6 +198,7 @@ void Tetris::update() {
 
 // Chạy trò chơi
 void Tetris::run() {
+    renderBombs();  // Vẽ bom trước khi vẽ khối Tetris
     SDL_Event event;
     Uint32 lastTick = SDL_GetTicks();
     Mix_PlayMusic(backgroundMusic, -1); // Bật nhạc nền

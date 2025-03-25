@@ -1,6 +1,7 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
+#include "Bomb.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -8,6 +9,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include<algorithm>
 #include <iostream>
 
 using namespace std;
@@ -62,6 +64,11 @@ private:
     Mix_Chunk* clearSound;
     TTF_Font* font;
     SDL_Texture* menuBackgroundTexture;
+    SDL_Texture* bombTexture;         // Texture bom
+    SDL_Texture* explosionTexture;    // Texture nổ
+    Mix_Chunk* explosionSound;        // Âm thanh nổ
+
+    vector<Bomb> bombs;          // Danh sách bom
 
     // Lưới trò chơi và khối hiện tại
     vector<vector<int>> grid;
@@ -109,6 +116,12 @@ public:
     void loadSounds();
     void spawnPiece();
     void run();
+
+    void spawnRandomBomb();           // Tạo bom ngẫu nhiên
+    void updateBombs();               // Cập nhật bom
+    void renderBombs();               // Vẽ bom
+    void explodeBomb(int x, int y);   // Xử lý nổ bom
+    void explodeAirBomb();
 };
 
 #endif // TETRIS_H
