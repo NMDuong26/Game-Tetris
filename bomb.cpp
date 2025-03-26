@@ -1,40 +1,41 @@
-// Bomb.cpp
 #include "Bomb.h"
-#include <SDL_mixer.h>
+#include "Tetris.h"
 
-Bomb::Bomb(int x, int y, SDL_Texture* texture)
-    : x(x), y(y), active(true), texture(texture) {
-         explosionSound = Mix_LoadWAV("explosion.wav");
-    }
+Bomb::Bomb(int x, int y, SDL_Texture* texture, BombType type)
+    : x(x), y(y), active(true), exploding(false), explodeStartTime(0),
+      type(type), texture(texture) {}
 
 void Bomb::update() {
     if (active) {
-        y += 1;
+        y += 1; // Áp dụng tốc độ
     }
     if (exploding && SDL_GetTicks() - explodeStartTime > 300) {
         exploding = false;
-        active = false; // Tự hủy sau khi nổ xong
+        active = false;
     }
 }
-
 void Bomb::render(SDL_Renderer* renderer) const {
-    // Chỉ render khi bom đang active HOẶC đang trong trạng thái nổ
     if (active || exploding) {
-        SDL_Rect rect = {x * 60, y * 60, 60, 60};
+        SDL_Rect rect = {x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE};
+        // Đổi màu theo loại bom khi nổ
+        if (exploding) {
+            if (type == ICE_BOMB) {
+                SDL_SetTextureColorMod(texture, 150, 200, 255); // Màu xanh băng
+            }
+        }
         SDL_RenderCopy(renderer, texture, nullptr, &rect);
+        SDL_SetTextureColorMod(texture, 255, 255, 255); // Reset màu
     }
 }
 
 void Bomb::explode() {
-        exploding = true;
-        active = false;  // Thêm dòng này để ngừng render bom ngay lập tức
-        explodeStartTime = SDL_GetTicks();
-    }
-
-void Bomb::deactivate() {
+    exploding = true;
+    explodeStartTime = SDL_GetTicks();
     active = false;
 }
 
 bool Bomb::isActive() const { return active; }
 int Bomb::getX() const { return x; }
 int Bomb::getY() const { return y; }
+BombType Bomb::getType() const { return type; }
+void Bomb::deactivate() { active = false; }

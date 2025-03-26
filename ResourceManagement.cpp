@@ -42,7 +42,9 @@ void Tetris::loadSounds() {
     backgroundMusic = Mix_LoadMUS("background_music.mp3");
     moveSound = Mix_LoadWAV("move_sound.wav");
     clearSound = Mix_LoadWAV("clear_line.wav");
-    if (!backgroundMusic || !moveSound || !clearSound) {
+    explosionSound = Mix_LoadWAV("explosion.wav");
+    iceSound = Mix_LoadWAV("ice_sound.wav");
+    if (!backgroundMusic || !moveSound || !clearSound || !explosionSound || !iceSound) {
         printf("Failed to load sounds: %s\n", Mix_GetError());
     }
 }

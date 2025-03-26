@@ -3,13 +3,13 @@
 	<iostream>
 	<SDL.h>
 
-1742695717 source:c:\users\admin\documents\ltnc\game-tetris\main.cpp
+1742971117 source:c:\users\admin\documents\ltnc\game-tetris\main.cpp
 	"Tetris.h"
 
 1742569769 c:\users\admin\documents\ltnc\game-tetris\main.h
 	"Tetris.h"
 
-1742929770 c:\users\admin\documents\ltnc\game-tetris\tetris.h
+1743010703 c:\users\admin\documents\ltnc\game-tetris\tetris.h
 	"Bomb.h"
 	<SDL.h>
 	<SDL_image.h>
@@ -53,19 +53,20 @@
 
 1742690615 c:\users\admin\documents\ltnc\game-tetris\include\main.h
 
-1742929770 source:c:\users\admin\documents\ltnc\game-tetris\gamelogic.cpp
+1743014022 source:c:\users\admin\documents\ltnc\game-tetris\gamelogic.cpp
+	"Tetris.h"
+	"bomb.h"
+
+1743006981 source:c:\users\admin\documents\ltnc\game-tetris\tetris.cpp
 	"Tetris.h"
 
-1742926312 source:c:\users\admin\documents\ltnc\game-tetris\tetris.cpp
+1742971117 source:c:\users\admin\documents\ltnc\game-tetris\eventhandling.cpp
 	"Tetris.h"
 
-1742929770 source:c:\users\admin\documents\ltnc\game-tetris\eventhandling.cpp
+1743002742 source:c:\users\admin\documents\ltnc\game-tetris\rendering.cpp
 	"Tetris.h"
 
-1742926312 source:c:\users\admin\documents\ltnc\game-tetris\rendering.cpp
-	"Tetris.h"
-
-1742693706 source:c:\users\admin\documents\ltnc\game-tetris\resourcemanagement.cpp
+1742987682 source:c:\users\admin\documents\ltnc\game-tetris\resourcemanagement.cpp
 	"Tetris.h"
 
 1742925392 c:\users\admin\documents\ltnc\game-tetris\include\bomb.h
@@ -78,13 +79,13 @@
 	"Bomb.h"
 	<SDL_mixer.h>
 
-1742928768 c:\users\admin\documents\ltnc\game-tetris\bomb.h
+1743010703 c:\users\admin\documents\ltnc\game-tetris\bomb.h
 	<SDL.h>
 	<SDL_image.h>
 	<SDL_mixer.h>
 	<vector>
 
-1742928602 source:c:\users\admin\documents\ltnc\game-tetris\bomb.cpp
+1743010703 source:c:\users\admin\documents\ltnc\game-tetris\bomb.cpp
 	"Bomb.h"
-	<SDL_mixer.h>
+	"Tetris.h"
 

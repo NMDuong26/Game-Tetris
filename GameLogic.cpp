@@ -1,18 +1,32 @@
 #include "Tetris.h"
+#include "bomb.h"
 
 void Tetris::spawnPiece() {
     shapeIndex = rand() % 7;
     currentPiece.clear();
     for (int i = 0; i < 4; i++)
         currentPiece.push_back({SHAPES[shapeIndex][i][0] + COLS / 2 - 1, SHAPES[shapeIndex][i][1]});
+
     if (collides()) gameOver = true; // Nếu va chạm, đặt gameOver = true
 }
 
 bool Tetris::collides(int dx, int dy, vector<Block> testPiece) {
     if (testPiece.empty()) testPiece = currentPiece;
+
     for (auto& block : testPiece) {
-        int x = block.x + dx, y = block.y + dy;
-        if (x < 0 || x >= COLS || y >= ROWS || (y >= 0 && grid[y][x])) return true;
+        int x = block.x + dx;
+        int y = block.y + dy;
+
+        // Kiểm tra va chạm với tường hoặc khối đã đặt (không bao gồm tuyết)
+        if (x < 0 || x >= COLS || y >= ROWS) {
+            return true;
+        }
+
+        // Chỉ kiểm tra va chạm với grid nếu y trong phạm vi hợp lệ
+        // và ô đó không phải là hiệu ứng tuyết
+        if (y >= 0 && grid[y][x] != 0) {
+            return true;
+        }
     }
     return false;
 }
@@ -28,7 +42,9 @@ void Tetris::clearLines() {
         if (full) {
             for (int yy = y; yy > 0; yy--) grid[yy] = grid[yy - 1]; // Di chuyển hàng phía trên xuống
             grid[0] = vector<int>(COLS, 0); // Đặt hàng trên cùng thành trống
-            speed = max(100, speed - 20);   // Tăng tốc độ rơi (tùy chọn)
+            if (!iceEffectActive) { // Chỉ tăng tốc khi KHÔNG có hiệu ứng băng
+                speed = max(100, speed - 20);
+            }
             if(isSoundOn) Mix_PlayChannel(-1, clearSound, 0);  // Phát âm thanh khi xóa hàng
 
             // Tăng điểm hiện tại
@@ -107,15 +123,20 @@ void Tetris::explodeAirBomb() {
 }
 
 void Tetris::spawnRandomBomb() {
-    if (rand() % 100 == 0) {  // Tỉ lệ 1/500 mỗi frame
-        bombs.emplace_back(rand() % COLS, 0, bombTexture);
+    if (rand() % 100 == 0) {  // Tỉ lệ 1/100 mỗi frame
+        BombType type = (rand() % 10 < 8) ?  NORMAL_BOMB : ICE_BOMB;  // 80% NORMAL, 20% ICE
+        SDL_Texture* tex = (type == ICE_BOMB) ? iceTexture : bombTexture;
+        bombs.emplace_back(rand() % COLS, 0, tex, type);
     }
 }
 
+
 void Tetris::updateBombs() {
+
     for (auto& bomb : bombs) {
+
         if (bomb.isActive()) {
-            bomb.update();
+           bomb.update(); // Truyền tốc độ vào hàm update của bom
         }
             // Kiểm tra va chạm với khối hoặc đáy
             if (bomb.getY() >= ROWS) {
@@ -136,50 +157,157 @@ void Tetris::updateBombs() {
 
 void Tetris::renderBombs() {
     for (const auto& bomb : bombs) {
-        if (bomb.isActive()) {  // Chỉ vẽ bom đang active
+        if (bomb.isActive()) {
             SDL_Rect bombRect = {
                 bomb.getX() * BLOCK_SIZE,
                 bomb.getY() * BLOCK_SIZE,
                 BLOCK_SIZE,
                 BLOCK_SIZE
             };
-            SDL_RenderCopy(renderer, bombTexture, nullptr, &bombRect);
+            //Chọn texture đúng theo loại bom
+            SDL_Texture* tex = (bomb.getType() == ICE_BOMB) ? iceTexture : bombTexture;
+            SDL_RenderCopy(renderer, tex, nullptr, &bombRect);
         }
     }
 }
 
 void Tetris::explodeBomb(int x, int y) {
+    BombType bombType = NORMAL_BOMB; // Giá trị mặc định
 
-    // Hiệu ứng nổ
-    SDL_Rect explosionRect = {
-        x * BLOCK_SIZE - BLOCK_SIZE,  // Center the explosion
-        y * BLOCK_SIZE - BLOCK_SIZE,
-        BLOCK_SIZE * 3,
-        BLOCK_SIZE * 3
-    };
-
-    SDL_RenderCopy(renderer, explosionTexture, nullptr, &explosionRect);
-    SDL_RenderPresent(renderer);
-
-    SDL_Delay(200);  // 0.1 giây
-
-    // Phá hủy khối (9 ô vuông 3x3)
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            int nx = x + dx;
-            int ny = y + dy;
-            if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
-                grid[ny][nx] = 0;  // Xóa khối
-            }
+    // Tìm quả bom tại (x, y) trong danh sách bombs
+    for (Bomb& bomb : bombs) {
+        if (bomb.getX() == x && bomb.getY() == y) {
+            bombType = bomb.getType();
+            break;
         }
     }
 
-    if (isSoundOn) Mix_PlayChannel(-1, explosionSound, 0);
+     if (bombType == ICE_BOMB) {
+        activateIceEffect(3000);
+        if (isSoundOn) Mix_PlayChannel(-1, iceSound, 0);
+
+        // Thêm kiểm tra và xử lý khối đang rơi
+        bool needDrop = false;
+        for (auto& block : currentPiece) {
+            if (block.y + 1 < ROWS && grid[block.y + 1][block.x] != 0) {
+                needDrop = true;
+                break;
+            }
+        }
+
+        if (needDrop) {
+            while (!collides(0, 1)) {
+                for (auto& block : currentPiece) block.y++;
+            }
+        }
+     }
+    else{
+        // Hiệu ứng nổ
+        SDL_Rect explosionRect = {
+            x * BLOCK_SIZE - BLOCK_SIZE,  // Center the explosion
+            y * BLOCK_SIZE - BLOCK_SIZE,
+            BLOCK_SIZE * 3,
+            BLOCK_SIZE * 3
+        };
+
+        SDL_RenderCopy(renderer, explosionTexture, nullptr, &explosionRect);
+        SDL_RenderPresent(renderer);
+
+        SDL_Delay(200);  // 0.1 giây
+
+
+
+        // Phá hủy khối (9 ô vuông 3x3)
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int nx = x + dx;
+                int ny = y + dy;
+                if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+                    grid[ny][nx] = 0;  // Xóa khối
+                }
+            }
+        }
+
+        if (isSoundOn) Mix_PlayChannel(-1, explosionSound, 0);
+    }
+}
+
+void Tetris::initSnow() {
+    snowflakes.clear();
+    const int FLAKE_COUNT = 100; // 100 bông tuyết
+    const float MIN_SPEED = 20.0f; // Tăng tốc độ tối thiểu
+    const float MAX_SPEED = 30.0f; // Tăng tốc độ tối đa
+
+    for (int i = 0; i < FLAKE_COUNT; i++) {
+        snowflakes.push_back({
+            static_cast<float>(rand() % (COLS * BLOCK_SIZE)), // Vị trí x ngẫu nhiên
+            static_cast<float>(-(rand() % 50 + 20)), // Bắt đầu cao hơn (từ -20 đến -70)
+            MIN_SPEED + static_cast<float>(rand() % 100) * (MAX_SPEED - MIN_SPEED) / 100.0f
+        });
+    }
+}
+
+void Tetris::activateIceEffect(Uint32 duration) {
+    if (!iceEffectActive) {
+        originalSpeed = speed;
+    }
+
+    iceEffectActive = true;
+    iceEffectEndTime = SDL_GetTicks() + duration;
+    snowEndTime = iceEffectEndTime + 3000;
+    speed = originalSpeed * 2; // Giảm tốc game 50%
+
+    isSnowing = true;
+    initSnow();
+}
+void Tetris::updateSnow() {
+    if (!isSnowing) return;
+
+    bool allFlakesGone = true;
+    float speedModifier = iceEffectActive ? 0.5f : 1.0f; // Giảm tốc 50% khi hiệu ứng băng còn hoạt động
+
+    for (auto& flake : snowflakes) {
+        if (flake.y <= ROWS * BLOCK_SIZE) {
+            flake.y += flake.speed * speedModifier; // Áp dụng tốc độ theo hiệu ứng
+            allFlakesGone = false;
+        }
+    }
+
+    if (allFlakesGone && SDL_GetTicks() > snowEndTime) {
+        isSnowing = false;
+    }
+}
+
+void Tetris::renderSnow() {
+    if (!isSnowing) return;
+
+    SDL_Rect dest;
+    for (const auto& flake : snowflakes) {
+        dest = { static_cast<int>(flake.x), static_cast<int>(flake.y), 20, 20 };
+        SDL_RenderCopy(renderer, snowTexture, nullptr, &dest);
+    }
 }
 
 void Tetris::update() {
     spawnRandomBomb();  // Tạo bom ngẫu nhiên
     updateBombs();      // Cập nhật bom
+    updateSnow();       // Cập nhật vị trí tuyết
+
+    // Kiểm tra hiệu ứng băng
+   if (iceEffectActive && SDL_GetTicks() > iceEffectEndTime) {
+        bool snowFinished = true;
+        for (auto& flake : snowflakes) {
+            if (flake.y <= ROWS * BLOCK_SIZE) {
+                snowFinished = false;
+                break;
+            }
+        }
+        if (snowFinished) {
+            speed = originalSpeed; // Chỉ khôi phục khi tuyết đã rơi hết
+            iceEffectActive = false;
+        }
+    }
+
 
     if (!collides()) {
         for (auto& block : currentPiece) block.y++; // Di chuyển khối xuống
@@ -189,10 +317,11 @@ void Tetris::update() {
         spawnPiece(); // Tạo khối mới
     }
 
+
     // Cập nhật điểm cao nhất
     if (currentScore >= highScore) {
         highScore = currentScore;
-        saveHighScore(); // Lưu điểm cao nhất vào file
+        saveHighScore();
     }
 }
 
@@ -235,5 +364,4 @@ void Tetris::run() {
         }
     }
 }
-
 

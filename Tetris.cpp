@@ -59,13 +59,19 @@ Tetris::Tetris() : window(nullptr), renderer(nullptr), backgroundTexture(nullptr
     pauseButtonTexture = loadTexture("pause.png", renderer);
     continueTexture = loadTexture("continue.png", renderer);
 
+    iceTexture = loadTexture("ice_bomb.png", renderer);
+    snowTexture = loadTexture("snowflake.png", renderer);
     bombTexture = loadTexture("bomb.png", renderer);
     explosionTexture = loadTexture("explosion.png", renderer);
-    explosionSound = Mix_LoadWAV("explosion.wav");
+
+    isSnowing = false;
+    snowStartTime = 0;
+    snowEndTime = 0;
 
     // Kiểm tra xem các texture có được tải thành công không
     if (!startButtonTexture || !instructionsButtonTexture || !exitButtonTexture ||
-        !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture || !bombTexture || !explosionTexture) {
+        !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture || !bombTexture || !explosionTexture
+        || !iceTexture || !snowTexture ) {
         printf("Failed to load button textures!\n");
     }
     // Tải ảnh cho phần hướng dẫn
@@ -80,6 +86,7 @@ Tetris::Tetris() : window(nullptr), renderer(nullptr), backgroundTexture(nullptr
     loadSounds();
     spawnPiece();
     loadHighScore(); // Đọc điểm cao nhất khi khởi động game
+    initSnow();
 }
 
 // Destructor
@@ -98,6 +105,8 @@ Tetris::~Tetris() {
     SDL_DestroyTexture(soundOffTexture);
     SDL_DestroyTexture(pauseButtonTexture);
     SDL_DestroyTexture(continueTexture);
+    SDL_DestroyTexture(iceTexture);
+    SDL_DestroyTexture(snowTexture);
     SDL_DestroyTexture(bombTexture);
     SDL_DestroyTexture(explosionTexture);
 
@@ -105,6 +114,7 @@ Tetris::~Tetris() {
     Mix_FreeChunk(moveSound);
     Mix_FreeChunk(clearSound);
     Mix_FreeChunk(explosionSound);
+    Mix_FreeChunk(iceSound);
     Mix_CloseAudio();
     IMG_Quit();
     SDL_Quit();

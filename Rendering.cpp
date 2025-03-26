@@ -157,6 +157,8 @@ void Tetris::render() {
     sprintf(scoreText, "High Score: %d", highScore); // Điểm cao nhất
     renderText(scoreText, 10, 80, textColor);
 
+    renderSnow(); // Vẽ tuyết
+
     SDL_RenderPresent(renderer); // Cập nhật màn hình
 }
 

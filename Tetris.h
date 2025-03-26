@@ -64,9 +64,12 @@ private:
     Mix_Chunk* clearSound;
     TTF_Font* font;
     SDL_Texture* menuBackgroundTexture;
+
+    SDL_Texture* iceTexture;
     SDL_Texture* bombTexture;         // Texture bom
     SDL_Texture* explosionTexture;    // Texture nổ
-    Mix_Chunk* explosionSound;        // Âm thanh nổ
+    Mix_Chunk* explosionSound;        // Âm thanh nổ bom thường
+    Mix_Chunk* iceSound;               //Âm thanh nổ bom băng
 
     vector<Bomb> bombs;          // Danh sách bom
 
@@ -80,6 +83,18 @@ private:
     bool inMenu;
     bool isSoundOn; // Trạng thái âm thanh (bật/tắt)
     bool isContinue;  // Trạng thái tạm dừng
+
+    bool iceEffectActive;
+    Uint32 iceEffectEndTime;
+    float originalSpeed;
+
+    // Hiệu ứng tuyết
+    struct Snowflake { float x, y, speed; };
+    vector<Snowflake> snowflakes;
+    bool isSnowing;
+    Uint32 snowEndTime;
+    Uint32 snowStartTime;
+    SDL_Texture* snowTexture;
 
     // Vị trí và kích thước các nút
     SDL_Rect startButton = {SCREEN_WIDTH / 2 - 100, 270, 200, 80};
@@ -122,6 +137,11 @@ public:
     void renderBombs();               // Vẽ bom
     void explodeBomb(int x, int y);   // Xử lý nổ bom
     void explodeAirBomb();
+
+    void activateIceEffect(Uint32 duration);
+    void initSnow();
+    void updateSnow();
+    void renderSnow();
 };
 
 #endif // TETRIS_H
