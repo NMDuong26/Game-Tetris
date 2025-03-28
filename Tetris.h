@@ -59,15 +59,21 @@ private:
     SDL_Texture* soundOffTexture;
     SDL_Texture* pauseButtonTexture;
     SDL_Texture* continueTexture;
+    SDL_Texture* homeTexture;
     Mix_Music* backgroundMusic;
     Mix_Chunk* moveSound;
     Mix_Chunk* clearSound;
     TTF_Font* font;
     SDL_Texture* menuBackgroundTexture;
 
+    bool showExitConfirm = false;
+    SDL_Texture* returnTexture;
+    SDL_Texture* exitConfirmTexture;
+
     SDL_Texture* iceTexture;
     SDL_Texture* bombTexture;         // Texture bom
     SDL_Texture* explosionTexture;    // Texture nổ
+    SDL_Texture* icenoTexture;
     Mix_Chunk* explosionSound;        // Âm thanh nổ bom thường
     Mix_Chunk* iceSound;               //Âm thanh nổ bom băng
 
@@ -82,7 +88,7 @@ private:
     bool gameOver;
     bool inMenu;
     bool isSoundOn; // Trạng thái âm thanh (bật/tắt)
-    bool isContinue;  // Trạng thái tạm dừng
+    bool isPaused; // Trạng thái tạm dừng
 
     bool iceEffectActive;
     Uint32 iceEffectEndTime;
@@ -92,7 +98,6 @@ private:
     struct Snowflake { float x, y, speed; };
     vector<Snowflake> snowflakes;
     bool isSnowing;
-    Uint32 snowEndTime;
     Uint32 snowStartTime;
     SDL_Texture* snowTexture;
 
@@ -103,14 +108,23 @@ private:
     SDL_Rect soundButton = {SCREEN_WIDTH - 1000, 10, 60, 30};
     SDL_Rect pauseButton = {SCREEN_WIDTH - 100, 20, 60, 60};
 
+    SDL_Rect returnButton = {SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 20, 200, 80};
+    SDL_Rect exitConfirmButton = {SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 120, 200, 80};
+
 public:
     Tetris();
     SDL_Texture* loadTexture(const char* path, SDL_Renderer* renderer);
     ~Tetris();
+    void renderButton(SDL_Rect button, SDL_Texture* texture, int mouseX, int mouseY);
     void renderMenu();
     void renderText(const char* text, int x, int y, SDL_Color color);
     bool checkButtonClick(int mouseX, int mouseY, SDL_Rect button);
+    bool checkButtonHover(int mouseX, int mouseY, SDL_Rect button);
     void renderInstructions();
+    void renderExitConfirm();
+    void renderPauseDialog();
+    void returnToMainMenu();
+    void resetGame();
     void renderGameOver();
     bool collides(int dx = 0, int dy = 1, vector<Block> testPiece = {});
     void mergePiece();
@@ -136,7 +150,7 @@ public:
     void updateBombs();               // Cập nhật bom
     void renderBombs();               // Vẽ bom
     void explodeBomb(int x, int y);   // Xử lý nổ bom
-    void explodeAirBomb();
+    void explodeAirBomb(bool isSpaceKey);
 
     void activateIceEffect(Uint32 duration);
     void initSnow();

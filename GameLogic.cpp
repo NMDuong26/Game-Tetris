@@ -106,15 +106,28 @@ void Tetris::rotatePiece() {
     }
 }
 
-void Tetris::explodeAirBomb() {
+void Tetris::explodeAirBomb(bool isSpaceKey) {
     for (auto& bomb : bombs) {
-        if (bomb.isActive()) { // Nếu bom vẫn hoạt động trên không
-            explodeBomb(bomb.getX(), bomb.getY()); // Phát nổ
-            bomb.explode();
+        if (bomb.isActive()) {
+            BombType type = bomb.getType();
+
+            // Kiểm tra nên xử lý bom này không dựa trên phím nhấn
+            if ((isSpaceKey && type == ICE_BOMB) ||  // Bom xăng cho phím Space
+                (!isSpaceKey && type == NORMAL_BOMB)) {  // Bom thường cho phím B
+                // Kích nổ bom
+                explodeBomb(bomb.getX(), bomb.getY());
+                bomb.explode();
+
+                // Xử lý đặc biệt cho bom băng (nếu cần)
+                if (type == ICE_BOMB) {
+                    activateIceEffect(3000);
+                    if (isSoundOn) Mix_PlayChannel(-1, iceSound, 0);
+                }
+            }
         }
     }
 
-    // Xóa bom đã nổ khỏi danh sách
+    // Dọn dẹp bom đã nổ
     bombs.erase(
         std::remove_if(bombs.begin(), bombs.end(),
             [](const Bomb& b) { return !b.isActive(); }),
@@ -136,7 +149,7 @@ void Tetris::updateBombs() {
     for (auto& bomb : bombs) {
 
         if (bomb.isActive()) {
-           bomb.update(); // Truyền tốc độ vào hàm update của bom
+           bomb.update();
         }
             // Kiểm tra va chạm với khối hoặc đáy
             if (bomb.getY() >= ROWS) {
@@ -183,6 +196,19 @@ void Tetris::explodeBomb(int x, int y) {
     }
 
      if (bombType == ICE_BOMB) {
+        // Hiệu ứng nổ
+        SDL_Rect explosionRect = {
+            x * BLOCK_SIZE - BLOCK_SIZE,  // Center the explosion
+            y * BLOCK_SIZE - BLOCK_SIZE,
+            BLOCK_SIZE * 3,
+            BLOCK_SIZE * 3
+        };
+
+        SDL_RenderCopy(renderer, icenoTexture, nullptr, &explosionRect);
+        SDL_RenderPresent(renderer);
+
+        SDL_Delay(200);  // 0.1 giây
+
         activateIceEffect(3000);
         if (isSoundOn) Mix_PlayChannel(-1, iceSound, 0);
 
@@ -236,7 +262,7 @@ void Tetris::initSnow() {
     snowflakes.clear();
     const int FLAKE_COUNT = 100; // 100 bông tuyết
     const float MIN_SPEED = 20.0f; // Tăng tốc độ tối thiểu
-    const float MAX_SPEED = 30.0f; // Tăng tốc độ tối đa
+    const float MAX_SPEED = 80.0f; // Tăng tốc độ tối đa
 
     for (int i = 0; i < FLAKE_COUNT; i++) {
         snowflakes.push_back({
@@ -254,9 +280,7 @@ void Tetris::activateIceEffect(Uint32 duration) {
 
     iceEffectActive = true;
     iceEffectEndTime = SDL_GetTicks() + duration;
-    snowEndTime = iceEffectEndTime + 3000;
     speed = originalSpeed * 2; // Giảm tốc game 50%
-
     isSnowing = true;
     initSnow();
 }
@@ -273,7 +297,7 @@ void Tetris::updateSnow() {
         }
     }
 
-    if (allFlakesGone && SDL_GetTicks() > snowEndTime) {
+    if (allFlakesGone ) {
         isSnowing = false;
     }
 }
@@ -348,7 +372,7 @@ void Tetris::run() {
 
         if (inMenu) {
             renderMenu(); // Vẽ menu nếu đang ở trong menu
-        } else if (isContinue) {
+        } else if (!isPaused) {
             Uint32 currentTick = SDL_GetTicks();
             if (currentTick - lastTick > speed) {
                 lastTick = currentTick;

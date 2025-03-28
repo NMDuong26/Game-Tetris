@@ -3,7 +3,7 @@
 // Constructor
 Tetris::Tetris() : window(nullptr), renderer(nullptr), backgroundTexture(nullptr), backgroundMusic(nullptr),
                    moveSound(nullptr), clearSound(nullptr), speed(500), gameOver(false), inMenu(true),
-                   font(nullptr), isSoundOn(true), isContinue(true) {
+                   font(nullptr), isSoundOn(true), isPaused(false) {
     grid = vector<vector<int>>(ROWS, vector<int>(COLS, 0));
 
     // Khởi tạo SDL
@@ -58,20 +58,24 @@ Tetris::Tetris() : window(nullptr), renderer(nullptr), backgroundTexture(nullptr
     soundOffTexture = loadTexture("sound_off.png", renderer);
     pauseButtonTexture = loadTexture("pause.png", renderer);
     continueTexture = loadTexture("continue.png", renderer);
+    homeTexture = loadTexture("home.png", renderer);
+
+    returnTexture = loadTexture("return.png", renderer);
+    exitConfirmTexture = loadTexture("evacuation.png", renderer);
 
     iceTexture = loadTexture("ice_bomb.png", renderer);
     snowTexture = loadTexture("snowflake.png", renderer);
     bombTexture = loadTexture("bomb.png", renderer);
     explosionTexture = loadTexture("explosion.png", renderer);
+    icenoTexture = loadTexture("iceno.png", renderer);
 
     isSnowing = false;
     snowStartTime = 0;
-    snowEndTime = 0;
 
     // Kiểm tra xem các texture có được tải thành công không
     if (!startButtonTexture || !instructionsButtonTexture || !exitButtonTexture ||
         !soundOnTexture || !soundOffTexture || !pauseButtonTexture || !continueTexture || !bombTexture || !explosionTexture
-        || !iceTexture || !snowTexture ) {
+        || !iceTexture || !snowTexture || !icenoTexture || !homeTexture ) {
         printf("Failed to load button textures!\n");
     }
     // Tải ảnh cho phần hướng dẫn
@@ -105,10 +109,14 @@ Tetris::~Tetris() {
     SDL_DestroyTexture(soundOffTexture);
     SDL_DestroyTexture(pauseButtonTexture);
     SDL_DestroyTexture(continueTexture);
+    SDL_DestroyTexture(homeTexture);
     SDL_DestroyTexture(iceTexture);
     SDL_DestroyTexture(snowTexture);
     SDL_DestroyTexture(bombTexture);
     SDL_DestroyTexture(explosionTexture);
+    SDL_DestroyTexture(icenoTexture);
+    SDL_DestroyTexture(returnTexture);
+    SDL_DestroyTexture(exitConfirmTexture);
 
     Mix_FreeMusic(backgroundMusic);
     Mix_FreeChunk(moveSound);

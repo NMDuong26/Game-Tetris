@@ -11,7 +11,7 @@ void Tetris::handleMenuEvents(SDL_Event& event) {
         } else if (checkButtonClick(mouseX, mouseY, instructionsButton)) {
             renderInstructions(); // Hiển thị hướng dẫn
         } else if (checkButtonClick(mouseX, mouseY, exitButton)) {
-            gameOver = true; // Thoát game
+            renderExitConfirm(); //Hiển thị tùy chọn
         } else if (checkButtonClick(mouseX, mouseY, soundButton)) {
             isSoundOn = !isSoundOn;
             if (isSoundOn) Mix_ResumeMusic(); // Bật nhạc
@@ -27,29 +27,32 @@ void Tetris::handleGameEvents(SDL_Event& event) {
             case SDLK_RIGHT: movePiece(1); break;
             case SDLK_DOWN: dropPiece(); break;
             case SDLK_UP: rotatePiece(); break;
-            case SDLK_b: explodeAirBomb(); break;
+            case SDLK_b: explodeAirBomb(false); break;  // Chỉ bom thường
+            case SDLK_SPACE: explodeAirBomb(true); break;  // Chỉ bom xăng
         }
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN) {
         int mouseX = event.button.x;
         int mouseY = event.button.y;
 
+       // Xử lý sự kiện click nút pause
         if (checkButtonClick(mouseX, mouseY, pauseButton)) {
-            isContinue = !isContinue; // Đảo trạng thái continue/pause
+            isPaused = !isPaused;
 
-            // Kiểm tra cả hai điều kiện: isSoundOn và isContinue
-            if (isSoundOn && isContinue) {
-                Mix_ResumeMusic(); // Bật nhạc nếu cả hai điều kiện đều đúng
-            } else {
-                Mix_PauseMusic(); // Tắt nhạc nếu một trong hai điều kiện sai
+            // Xử lý âm thanh
+            if (isSoundOn) {
+                isPaused ? Mix_PauseMusic() : Mix_ResumeMusic();
             }
-
-            render(); // Render lại màn hình để cập nhật nút pause/continue
+            render(); // Cập nhật giao diện
+            // Hiển thị hộp thoại khi pause
+            if (isPaused) {
+                renderPauseDialog();
+            }
         }
 
         if (checkButtonClick(mouseX, mouseY, soundButton)) {
             isSoundOn = !isSoundOn;
-            if (isSoundOn && isContinue) {
+            if (isSoundOn && !isPaused) {
                 Mix_ResumeMusic(); // Bật nhạc
             } else {
                 Mix_PauseMusic(); // Tắt nhạc
@@ -65,7 +68,19 @@ void Tetris::handleGameEvents(SDL_Event& event) {
     }
 }
 
-bool Tetris::checkButtonClick(int mouseX, int mouseY, SDL_Rect button) {
+bool Tetris::checkButtonHover(int mouseX, int mouseY, SDL_Rect button) {
     return (mouseX >= button.x && mouseX <= button.x + button.w &&
             mouseY >= button.y && mouseY <= button.y + button.h);
 }
+
+bool Tetris::checkButtonClick(int mouseX, int mouseY, SDL_Rect button) {
+    if (checkButtonHover(mouseX, mouseY, button)) {
+        if (isSoundOn) {
+            Mix_PlayChannel(-1, moveSound, 0); // Phát âm thanh khi click
+        }
+        return true;
+    }
+    return false;
+}
+
+
