@@ -112,7 +112,7 @@ void Tetris::explodeAirBomb(bool isSpaceKey) {
             BombType type = bomb.getType();
 
             // Kiểm tra nên xử lý bom này không dựa trên phím nhấn
-            if ((isSpaceKey && type == ICE_BOMB) ||  // Bom xăng cho phím Space
+            if ((isSpaceKey && type == ICE_BOMB) ||  // Bom Băng cho phím Space
                 (!isSpaceKey && type == NORMAL_BOMB)) {  // Bom thường cho phím B
                 // Kích nổ bom
                 explodeBomb(bomb.getX(), bomb.getY());
@@ -136,7 +136,7 @@ void Tetris::explodeAirBomb(bool isSpaceKey) {
 }
 
 void Tetris::spawnRandomBomb() {
-    if (rand() % 100 == 0) {  // Tỉ lệ 1/100 mỗi frame
+    if (rand() % 50 == 0) {  // Tỉ lệ 1/100 mỗi frame
         BombType type = (rand() % 10 < 8) ?  NORMAL_BOMB : ICE_BOMB;  // 80% NORMAL, 20% ICE
         SDL_Texture* tex = (type == ICE_BOMB) ? iceTexture : bombTexture;
         bombs.emplace_back(rand() % COLS, 0, tex, type);
@@ -194,15 +194,15 @@ void Tetris::explodeBomb(int x, int y) {
             break;
         }
     }
-
-     if (bombType == ICE_BOMB) {
-        // Hiệu ứng nổ
+    // Hiệu ứng nổ
         SDL_Rect explosionRect = {
             x * BLOCK_SIZE - BLOCK_SIZE,  // Center the explosion
             y * BLOCK_SIZE - BLOCK_SIZE,
             BLOCK_SIZE * 3,
             BLOCK_SIZE * 3
         };
+
+     if (bombType == ICE_BOMB) {
 
         SDL_RenderCopy(renderer, icenoTexture, nullptr, &explosionRect);
         SDL_RenderPresent(renderer);
@@ -228,13 +228,6 @@ void Tetris::explodeBomb(int x, int y) {
         }
      }
     else{
-        // Hiệu ứng nổ
-        SDL_Rect explosionRect = {
-            x * BLOCK_SIZE - BLOCK_SIZE,  // Center the explosion
-            y * BLOCK_SIZE - BLOCK_SIZE,
-            BLOCK_SIZE * 3,
-            BLOCK_SIZE * 3
-        };
 
         SDL_RenderCopy(renderer, explosionTexture, nullptr, &explosionRect);
         SDL_RenderPresent(renderer);
@@ -388,4 +381,3 @@ void Tetris::run() {
         }
     }
 }
-

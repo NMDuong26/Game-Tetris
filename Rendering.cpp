@@ -167,12 +167,26 @@ void Tetris::renderExitConfirm() {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &dialogBox);
 
-        // Vẽ tiêu đề
-        SDL_Color textColor = {0, 0, 0, 255};
+        // Vẽ tiêu đề với hiệu ứng
+        SDL_Color textColor = {0, 0, 0, 255}; // Màu chữ đen
+        SDL_Color glowColor = {100, 150, 255, 80}; // Màu viền phát sáng xanh
         const char* message = "Do you want to quit the game?";
         int textWidth, textHeight;
         TTF_SizeText(font, message, &textWidth, &textHeight);
-        renderText(message, SCREEN_WIDTH/2 - textWidth/2, SCREEN_HEIGHT/2 - textHeight/2 - 50, textColor);
+
+        // Vẽ bóng đổ trước (tạo độ sâu)
+        renderTextWithEffect(message,
+                        SCREEN_WIDTH/2 - textWidth/2 + 1,
+                        SCREEN_HEIGHT/2 - textHeight/2 - 50 + 1,
+                        {50, 50, 50, 150}, // Màu bóng xám
+                        false); // Không glow
+
+        // Vẽ text chính với hiệu ứng phát sáng
+        renderTextWithEffect(message,
+                        SCREEN_WIDTH/2 - textWidth/2,
+                        SCREEN_HEIGHT/2 - textHeight/2 - 50,
+                        textColor,
+                        true); // Có glow
 
         // Lấy vị trí chuột
         int mouseX, mouseY;
@@ -230,12 +244,42 @@ void Tetris::renderPauseDialog() {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &dialogBox);
 
-        // 3. Vẽ tiêu đề với vị trí mới
-        SDL_Color textColor = {0, 0, 0, 255};
+       // Vẽ tiêu đề "GAME PAUSED" với hiệu ứng nổi bật
+        SDL_Color textColor = {0, 0, 0, 255}; // Màu chữ trắng
+        SDL_Color glowColor = {100, 200, 255, 120}; // Màu viền phát sáng xanh nhạt
         const char* message = "GAME PAUSED";
         int textWidth, textHeight;
         TTF_SizeText(font, message, &textWidth, &textHeight);
-        renderText(message, SCREEN_WIDTH/2 - textWidth/2, SCREEN_HEIGHT/2 - textHeight/2 - 180, textColor); // Xuống thêm 10px
+
+            // Vị trí trung tâm (đã điều chỉnh xuống 180px từ giữa màn hình)
+        int textX = SCREEN_WIDTH/2 - textWidth/2;
+        int textY = SCREEN_HEIGHT/2 - textHeight/2 - 172;
+
+        // Vẽ bóng đổ (lệch 3px để tạo chiều sâu)
+        renderTextWithEffect(message,
+                        textX + 1,
+                        textY + 1,
+                        {0, 0, 0, 180}, // Màu bóng đen
+                        false); // Không glow
+
+        // Vẽ text chính với hiệu ứng phát sáng mạnh
+        renderTextWithEffect(message,
+                        textX,
+                        textY,
+                        textColor,
+                        true); // Có glow
+
+        // Tùy chọn: Thêm hiệu ứng highlight trắng nhẹ
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 60);
+        SDL_Rect highlightRect = {
+            textX - 5,
+            textY - 5,
+            textWidth + 10,
+            textHeight + 10
+        };
+        SDL_RenderDrawRect(renderer, &highlightRect);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
         // 4. Lấy vị trí chuột
         int mouseX, mouseY;
@@ -368,7 +412,7 @@ void Tetris::renderGameOver() {
 }
 
 void Tetris::render() {
-    renderBackground(); // Vẽ nền
+    renderBackground();
 
     // Vẽ lưới và các khối
     for (int y = 0; y < ROWS; y++) {
@@ -386,29 +430,85 @@ void Tetris::render() {
         drawBlock(block.x, block.y, COLORS[shapeIndex]);
     }
 
-    // Lấy vị trí chuột cho hiệu ứng hover
+    // Lấy vị trí chuột (đã sửa lỗi chính tả GetWouseState -> GetMouseState)
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
 
-    // Vẽ nút pause với hiệu ứng hover
+    // Vẽ các nút
     if (!inMenu) {
-        renderButton(pauseButton,isPaused ? pauseButtonTexture : continueTexture,mouseX, mouseY);
+        renderButton(pauseButton, isPaused ? pauseButtonTexture : continueTexture, mouseX, mouseY);
     }
-
-    // Vẽ nút âm thanh với hiệu ứng hover
-    renderButton(soundButton,isSoundOn ? soundOnTexture : soundOffTexture,mouseX, mouseY);
+    renderButton(soundButton, isSoundOn ? soundOnTexture : soundOffTexture, mouseX, mouseY);
 
     // Hiển thị điểm
-    SDL_Color textColor = {255, 255, 255, 255};
+    SDL_Color textColor = {225, 225, 225, 255}; // Trắng
+    SDL_Color shadowColor = {0, 0, 0, 255};   // Màu bóng đổ
+
     char scoreText[40];
-    sprintf(scoreText, "Score: %d", currentScore);
-    renderText(scoreText, 10, 50, textColor);
-    sprintf(scoreText, "High Score: %d", highScore);
-    renderText(scoreText, 10, 80, textColor);
+    sprintf(scoreText, "SCORE: %d", currentScore);
+    renderTextWithEffect(scoreText, 12, 52, shadowColor, false);
+
+    renderTextWithEffect(scoreText, 10, 50, textColor, true);
+
+    sprintf(scoreText, "HIGH SCORE: %d", highScore);
+    renderTextWithEffect(scoreText, 12, 93, shadowColor, false);
+    renderTextWithEffect(scoreText, 10, 91, textColor, true);
 
     renderSnow();
     SDL_RenderPresent(renderer);
 }
+
+void Tetris::renderTextWithEffect(const char* text, int x, int y, SDL_Color color, bool withGlow) {
+    // Tạo surface và texture từ text
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, text, color);
+    if (!textSurface) return;
+
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    if (!textTexture) {
+        SDL_FreeSurface(textSurface);
+        return;
+    }
+
+    SDL_Rect textRect = {x, y, textSurface->w, textSurface->h};
+
+    // Hiệu ứng đổ bóng (vẽ trước text chính)
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureAlphaMod(textTexture, 80); // Độ trong suốt của bóng
+    SDL_Rect shadowRect = {
+        textRect.x + 2, // Độ lệch bóng
+        textRect.y + 2,
+        textRect.w,
+        textRect.h
+    };
+    SDL_RenderCopy(renderer, textTexture, nullptr, &shadowRect);
+    SDL_SetTextureAlphaMod(textTexture, 255); // Reset alpha
+
+    // Hiệu ứng phát sáng viền khi withGlow = true
+    if (withGlow) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD);
+        SDL_SetRenderDrawColor(renderer, 100, 150, 255, 80); // Màu xanh phát sáng
+
+        // Vẽ 3 lớp glow với kích thước tăng dần
+        for (int i = 0; i < 3; i++) {
+            SDL_Rect glowRect = {
+                textRect.x - i,
+                textRect.y - i,
+                textRect.w + i * 2,
+                textRect.h + i * 2
+            };
+            SDL_RenderDrawRect(renderer, &glowRect);
+        }
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    }
+
+    // Vẽ text chính
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+
+    // Giải phóng bộ nhớ
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+}
+
 
 void Tetris::renderBackground() {
     if (backgroundTexture) {
@@ -421,10 +521,55 @@ void Tetris::renderBackground() {
 
 void Tetris::drawBlock(int x, int y, SDL_Color color) {
     SDL_Rect rect = {x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE};
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &rect); // Vẽ khối
 
-    // Vẽ viền
+    // 1. Vẽ khối chính với màu đặc
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &rect);
+
+    // 2. Hiệu ứng viền 3D sắc nét
+    // Viền sáng (top và left)
+    SDL_SetRenderDrawColor(renderer,
+        min(color.r + 80, 255),
+        min(color.g + 80, 255),
+        min(color.b + 80, 255),
+        255);
+    SDL_RenderDrawLine(renderer, rect.x, rect.y, rect.x + rect.w - 1, rect.y); // Top
+    SDL_RenderDrawLine(renderer, rect.x, rect.y, rect.x, rect.y + rect.h - 1); // Left
+
+    // Viền tối (bottom và right)
+    SDL_SetRenderDrawColor(renderer,
+        max(color.r - 80, 0),
+        max(color.g - 80, 0),
+        max(color.b - 80, 0),
+        255);
+    SDL_RenderDrawLine(renderer, rect.x + rect.w - 1, rect.y, rect.x + rect.w - 1, rect.y + rect.h); // Right
+    SDL_RenderDrawLine(renderer, rect.x, rect.y + rect.h - 1, rect.x + rect.w, rect.y + rect.h - 1); // Bottom
+
+    // 3. Hiệu ứng phát sáng viền ôm trọn khối
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD);
+    SDL_SetRenderDrawColor(renderer, 100, 150, 255, 80); // Màu xanh phát sáng
+
+    // Vẽ 3 lớp glow với kích thước tăng dần
+    for (int i = 1; i <= 3; i++) {
+        SDL_Rect glowRect = {
+            rect.x - i,
+            rect.y - i,
+            rect.w + i * 2,
+            rect.h + i * 2
+        };
+        // Chỉ vẽ phần glow không bị che bởi khối khác
+        if (x > 0 && grid[y][x-1] == 0) // Kiểm tra ô bên trái
+            SDL_RenderDrawLine(renderer, glowRect.x, glowRect.y, glowRect.x, glowRect.y + glowRect.h);
+        if (x < COLS-1 && grid[y][x+1] == 0) // Kiểm tra ô bên phải
+            SDL_RenderDrawLine(renderer, glowRect.x + glowRect.w, glowRect.y, glowRect.x + glowRect.w, glowRect.y + glowRect.h);
+        if (y > 0 && grid[y-1][x] == 0) // Kiểm tra ô phía trên
+            SDL_RenderDrawLine(renderer, glowRect.x, glowRect.y, glowRect.x + glowRect.w, glowRect.y);
+        if (y < ROWS-1 && grid[y+1][x] == 0) // Kiểm tra ô phía dưới
+            SDL_RenderDrawLine(renderer, glowRect.x, glowRect.y + glowRect.h, glowRect.x + glowRect.w, glowRect.y + glowRect.h);
+    }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    // 4. Viền đen sắc nét (vẽ sau cùng)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderDrawRect(renderer, &rect);
 }

@@ -97,6 +97,7 @@ Tetris::Tetris() : window(nullptr), renderer(nullptr), backgroundTexture(nullptr
 Tetris::~Tetris() {
     TTF_CloseFont(font); // Giải phóng font
     TTF_Quit(); // Đóng SDL_ttf
+    // Giải phóng ảnh
     SDL_DestroyTexture(menuBackgroundTexture);
     SDL_DestroyTexture(backgroundTexture);
     SDL_DestroyRenderer(renderer);
@@ -117,7 +118,7 @@ Tetris::~Tetris() {
     SDL_DestroyTexture(icenoTexture);
     SDL_DestroyTexture(returnTexture);
     SDL_DestroyTexture(exitConfirmTexture);
-
+    // Giải phóng âm thanh
     Mix_FreeMusic(backgroundMusic);
     Mix_FreeChunk(moveSound);
     Mix_FreeChunk(clearSound);

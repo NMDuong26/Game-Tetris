@@ -7,7 +7,7 @@ Bomb::Bomb(int x, int y, SDL_Texture* texture, BombType type)
 
 void Bomb::update() {
     if (active) {
-        y += 1; // Áp dụng tốc độ
+        y += 1;
     }
     if (exploding && SDL_GetTicks() - explodeStartTime > 300) {
         exploding = false;

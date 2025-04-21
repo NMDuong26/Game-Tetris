@@ -70,19 +70,21 @@ private:
     SDL_Texture* returnTexture;
     SDL_Texture* exitConfirmTexture;
 
+    // Texture, âm thanh bom
     SDL_Texture* iceTexture;
     SDL_Texture* bombTexture;         // Texture bom
-    SDL_Texture* explosionTexture;    // Texture nổ
+    SDL_Texture* explosionTexture;
     SDL_Texture* icenoTexture;
-    Mix_Chunk* explosionSound;        // Âm thanh nổ bom thường
-    Mix_Chunk* iceSound;               //Âm thanh nổ bom băng
+    Mix_Chunk* explosionSound;
+    Mix_Chunk* iceSound;
 
     vector<Bomb> bombs;          // Danh sách bom
 
     // Lưới trò chơi và khối hiện tại
     vector<vector<int>> grid;
     vector<Block> currentPiece;
-    int speed, shapeIndex;
+
+    int speed, shapeIndex; // Tốc độ, chỉ số chọn khối.
     int currentScore = 0; // Điểm hiện tại
     int highScore = 0;    // Điểm cao nhất
     bool gameOver;
@@ -90,7 +92,7 @@ private:
     bool isSoundOn; // Trạng thái âm thanh (bật/tắt)
     bool isPaused; // Trạng thái tạm dừng
 
-    bool iceEffectActive;
+    bool iceEffectActive; // Trạng thái tuyết rơi
     Uint32 iceEffectEndTime;
     float originalSpeed;
 
@@ -115,7 +117,7 @@ public:
     Tetris();
     SDL_Texture* loadTexture(const char* path, SDL_Renderer* renderer);
     ~Tetris();
-    void renderButton(SDL_Rect button, SDL_Texture* texture, int mouseX, int mouseY);
+    void renderButton(SDL_Rect button, SDL_Texture* texture, int mouseX, int mouseY); // Vẽ các nút có hiệu ứng hover
     void renderMenu();
     void renderText(const char* text, int x, int y, SDL_Color color);
     bool checkButtonClick(int mouseX, int mouseY, SDL_Rect button);
@@ -126,16 +128,18 @@ public:
     void returnToMainMenu();
     void resetGame();
     void renderGameOver();
-    bool collides(int dx = 0, int dy = 1, vector<Block> testPiece = {});
-    void mergePiece();
-    void clearLines();
-    void movePiece(int dx);
-    void dropPiece();
-    void rotatePiece();
+    bool collides(int dx = 0, int dy = 1, vector<Block> testPiece = {}); // Kiểm tra va chạm
+    void mergePiece(); // Hợp khối vào lưới
+    void clearLines(); // Xóa hàng đã đầy
+    void movePiece(int dx); // Di chuyển trái phải
+    void dropPiece(); // Di chuyển nhanh xuống
+    void rotatePiece(); // Xoay khối 90 độ
     void update();
+    void renderTextWithEffect(const char* text, int x, int y, SDL_Color color, bool withGlow);
     void render();
     void renderBackground();
-    void drawBlock(int x, int y, SDL_Color color);
+
+    void drawBlock(int x, int y, SDL_Color color); // Vẽ các khối
     void handleMenuEvents(SDL_Event& event);
     void handleGameEvents(SDL_Event& event);
     void loadHighScore();
@@ -152,8 +156,8 @@ public:
     void explodeBomb(int x, int y);   // Xử lý nổ bom
     void explodeAirBomb(bool isSpaceKey);
 
-    void activateIceEffect(Uint32 duration);
-    void initSnow();
+    void activateIceEffect(Uint32 duration); //Hiệu ứng tuyết
+    void initSnow(); // Tạo tuyết
     void updateSnow();
     void renderSnow();
 };

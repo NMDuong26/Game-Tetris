@@ -83,4 +83,3 @@ bool Tetris::checkButtonClick(int mouseX, int mouseY, SDL_Rect button) {
     return false;
 }
 
-
